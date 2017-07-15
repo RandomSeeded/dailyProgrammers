@@ -4,7 +4,9 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "@types/node": "^8.0.13"
+    "@types/async": "^2.0.40",
+    "@types/node": "^8.0.13",
+    "async": "^2.5.0"
   },
   "scripts": {
     "compile": "tsc && node app.js",
