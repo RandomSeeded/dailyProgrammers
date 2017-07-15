@@ -1,0 +1,97 @@
+'use strict';
+
+// PROBLEM
+// Generate sets such that they contain all possible pairs of elements within N sets
+// Ideally: minimal number of sets?
+// Ideally: minimal time?
+//
+// Thoughts on approaches:
+// - probably necessary to figure out what all the pairs are, if nothing else, no?
+// - this is necessary if nothing else to figure out when we're done...unless there's a way we can do it that's more clever
+
+const _ = require('lodash');
+
+// not worth improving
+function generateAllPairs(inputSets) {
+  // what does this actually look like?
+  // given [1,2,3], [A, B] => combinatorial explosion
+  // What about given [1,2], [A, B], [y, z]?
+  // So we need to do a few different sets of loops to gen all pairs:
+  // Need to create all pairings of sets
+  // Within each set, create all pairs belonging to that set
+
+  // Clearly terrifyingly bad, we will have to get smarter after this
+  const allPairs = new Set();
+  _.each(inputSets, baseSet => {
+    _.each(inputSets, matchingSet => {
+      if (inputSets === matchingSet) {
+        return;
+      }
+
+      _.each(baseSet, baseElem => {
+        _.each(matchingSet, matchingElem => {
+          // kinda jank that there's dupes in here around the reverse stringify
+          // But as long as we remove both as we use it's fine and easier probs
+          allPairs.add(stringify(baseElem, matchingElem));
+          allPairs.add(stringify(matchingElem, baseElem));
+        });
+      });
+    });
+  });
+
+  return allPairs;
+  // Where WOULD we go from here? Kinda tricky still.
+}
+
+function solve(inputSets) {
+  const allPairs = generateAllPairs(inputSets);
+  // How to assemble and use?
+  // Approaches:
+  // - iterate until all pairs used?
+  // We still keep coming back to the same exact issue
+  // iteration over first two is KNOWN
+  // What is unknown is how to use the third
+  return allPairs;
+}
+
+// Brute force solution for now
+
+function stringify(A, B) {
+  return `${A}:${B}`;
+}
+
+function test() {
+  const problemSets = [[['0', '1'], ['A', 'B', 'C'], ['D', 'E', 'F', 'G']]]
+  _.each(problemSets, problemSet => {
+    console.log(problemSet,solve(problemSet));
+  });
+}
+
+test();
+
+// OLD THOUGHTS
+// OK how to do this in a more intelligent fashion?
+// We can think of it instead in terms of individual elements
+// E.g. first element of first set MUST be matched against every other element in every other set
+// If only two input sets this is super easy, all combos of the two
+// With three, how do we want to handle?
+// While we're iterating over first two in the same, way, we also start on the third
+// Sure
+// And then we just mark down the additional pairs we've created at the same time, no?
+// How will we know when we're done with all the sets?
+// First two again easy
+// What about the first-to-third? Second-to-third?
+//
+// Given [A,B], [1,2], [x, y]
+// With three, iteration looks like:
+// a1x
+// a2y(?) - if focused on pairing a to everything
+// b1x
+// b2y(?) - ditto
+//
+// Given 4th: [A,B], [1,2], [x, y], [FE, FF]
+// a1xFE
+// a2yFF
+// ...
+//
+// How can we avoid repeating work in our iterations though?
