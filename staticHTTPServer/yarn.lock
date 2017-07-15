@@ -2,3 +2,6 @@
 # yarn lockfile v1
 
 
+"@types/node@^8.0.13":
+  version "8.0.13"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.13.tgz#530f0f9254209b0335bf5cc6387822594ef47093"
