@@ -62,6 +62,7 @@ function getContentType(fileType: string): string {
 async function sendResponse(socket: any, response: string) {
   socket.write(Buffer.from(response), (err: string, res: boolean) => {
     if (err) {
+      // TODO (nw): dont break process on socket error?
       console.log(`error writing tcp response ${err}`);
       process.exit(1);
     }
