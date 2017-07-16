@@ -18,7 +18,8 @@ console.log(`Starting static HTTP server on port ${PORT}`);
 
 function parseRequest(req: string) {
   const [messageHeader] = req.split('\n');
-  const [ method, path ] = messageHeader.split(' ');
+  const [ method, rawPath ] = messageHeader.split(' ');
+  const path = rawPath === '/' ? '/index.html' : rawPath;
   return { method, path };
 }
 
@@ -40,22 +41,22 @@ async function readFile(path: string) {
 }
 
 // TODO (nw): figure out method of telling typescript comp yes this actually cant be undefd
-function getContentType(fileType: string | undefined): string {
+function getContentType(fileType: string): string {
   // TODO (nw): move this to a definitions folder
-  const contentTypesByfileType = { 
-    html: 'text/html'
+  const contentTypesByfileType: { [s: string]: string; } = { 
+    html: 'text/html',
+    css: 'text/css',
+    js: 'text/javascript',
+    gif: 'image/gif',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    svg: 'image/svg+xml',
   };
-  const contentType: string = contentTypesByfileType.html;
+  const contentType: string = contentTypesByfileType[fileType];
   return contentType;
 }
 
-/*
- * Response body looks like:
-    const response: string = `HTTP/1.1 200 OK
-      Content-type: text/html
-
-      <H1>Success!</H1>`;
-*/
 function createResponse(contentType: string, fileContents: string): string {
   const response: string = `HTTP/1.1 200 OK
     Content-type: ${contentType}
@@ -70,7 +71,7 @@ net.createServer(socket => {
     const { method, path } = parseRequest(data.toString());
     const fileContents: string = await readFile(path);
 
-    const fileType: string | undefined = _.last(path.split('.'));
+    const fileType = _.last(path.split('.')) as string;
 
     if (_.isUndefined(fileType)) {
       // have a well defined 404 response here and send it
