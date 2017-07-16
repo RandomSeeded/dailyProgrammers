@@ -1,9 +1,10 @@
 'use strict';
 
+import * as assert from 'assert';
 import * as _ from 'lodash';
 import * as fs from 'fs';
 import * as net from 'net';
-import { response } from './responses';
+import * as responses from './responses';
 
 const HOST = '127.0.0.1';
 const PORT = 8080;
@@ -43,7 +44,7 @@ async function readFile(path: string) {
 // TODO (nw): figure out method of telling typescript comp yes this actually cant be undefd
 function getContentType(fileType: string): string {
   // TODO (nw): move this to a definitions folder
-  const contentTypesByfileType: { [s: string]: string; } = { 
+  const contentTypesByfileType: { [key: string]: string; } = { 
     html: 'text/html',
     css: 'text/css',
     js: 'text/javascript',
@@ -57,36 +58,35 @@ function getContentType(fileType: string): string {
   return contentType;
 }
 
-function createResponse(contentType: string, fileContents: string): string {
-  const response: string = `HTTP/1.1 200 OK
-    Content-type: ${contentType}
-
-    ${fileContents}`;
-
-  return response;
+// TODO (nw): figure out correct type for socket. More importantly: how do you generally determine?
+async function sendResponse(socket: any, response: string) {
+  socket.write(Buffer.from(response), (err: string, res: boolean) => {
+    if (err) {
+      console.log(`error writing tcp response ${err}`);
+      process.exit(1);
+    }
+    socket.destroy();
+  });
 }
 
 net.createServer(socket => {
   socket.on('data', async (data: Buffer) => {
     const { method, path } = parseRequest(data.toString());
-    const fileContents: string = await readFile(path);
-
-    const fileType = _.last(path.split('.')) as string;
-
-    if (_.isUndefined(fileType)) {
-      // have a well defined 404 response here and send it
-      return;
-    }
-
-    const contentType: string = getContentType(fileType);
-    const response: string = createResponse(contentType, fileContents);
-    socket.write(Buffer.from(response), (err: string, res: boolean) => {
-      if (err) {
-        console.log(`error writing tcp response ${err}`);
-        process.exit(1);
+    try {
+      const fileType = _.last(path.split('.')) as string;
+      const fileContents: string = await readFile(path);
+      const contentType: string = getContentType(fileType);
+      const response: string = responses.createOK(contentType, fileContents);
+      sendResponse(socket, response);
+    } catch (e) {
+      console.log(`Error handling request ${e}`);
+      // This is not secure :P
+      if (_.includes(e, 'Error handling request Error: ENOENT: no such file or directory')) {
+        return sendResponse(socket, responses.createFileNotFound());
       }
-      socket.destroy();
-    });
+
+      sendResponse(socket, responses.createServerError());
+    }
   });
 
   // possibly cleanup stuff here? 
